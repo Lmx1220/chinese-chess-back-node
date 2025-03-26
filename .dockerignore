@@ -1,0 +1,13 @@
+node_modules
+dist
+npm-debug.log
+logs
+Dockerfile
+.dockerignore
+start.sh
+*.tar
+.idea
+.git
+.gitignore
+.DS_Store
+d_chess.sql
