@@ -21,10 +21,6 @@ export const enum config {
     DB_USER = 'd_chess',
     DB_PASSWORD = '******',
     DB_HOST = '******',
-    // DB_USER = 'root',
-    // DB_PASSWORD = '******',
-    // DB_HOST = '192.168.1.60',
-
     DB_PORT = 3306,
     DB_NAME = 'd_chess',
 }
