@@ -432,6 +432,12 @@ class BattleUtils {
         }
         const lastBattleData = await BattleHistoryDao.builder().getUserLastBattleHistory(null,userId);
         const requestGameMap = FenUtils.fromFen(lastBattleData.gameFen)
+
+        var toChess = requestGameMap.find(item => item.x ===to.x && item.y === to.y);
+        if (toChess && from.isBlackColor === toChess.isBlackColor){
+            console.error('不能移动到自己棋子在点')
+            return false
+        }
         switch (from.prefix) {
             case "Z":
                 return this.bingRule(requestGameMap, from, to);

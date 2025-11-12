@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cur_dir=`pwd`
+
 # 容器名称
 CONTAINER_NAME="chess-back"
 
@@ -24,9 +26,10 @@ docker build -t ${IMAGE_NAME} .
 
 # 运行容器
 echo "启动容器: ${CONTAINER_NAME}"
-docker run -idt -p 9099:9099 --name ${CONTAINER_NAME} --restart=always \
+docker run -idt -p 9099:9099 -p 7005:7005 --name ${CONTAINER_NAME} --restart=always \
                   -e TZ="Asia/Shanghai" \
-                  -v /Users/lmx/data/projects/uploadfile/socket-chess-file/:/data/projects \
+                  -v `pwd`/uploadfile:/data/projects \
+                  -v `pwd`/logs:/chess/logs \
                   ${IMAGE_NAME}
 
 echo "容器已启动，访问 http://localhost:9099 和 查看应用"

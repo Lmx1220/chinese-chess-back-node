@@ -504,50 +504,53 @@ class BattleServiceImpl {
     @Log({excludeNames: 'socket'})
     async moveChessImpl(socket: any, battleId: string, userId: string, roomId: string, from: any, to: any, fromChessBox: object, toChessBox: object, stepExplain: string): Promise<DataResp<any>> {
         const log = global.logUtils.getArgsLogger(arguments, {userId, roomId, battleId});
-
-        // 检查用户的棋子是否可以移动
-        if (!(await battleUtils.checkUserMove(userId, from, to))) {
-            log.warn(`为用户[${userId}]检测棋子移动状态时, 校验不通过`);
-            return DataResp.fail('落子状态异常');
+        const lastBattleData = await BattleHistoryDao.builder().getUserLastBattleHistory(battleId, userId);
+        // 查询当前用户的对战状态
+        const userState: any = await UserStateDao.builder().select({roomId, userStatus: USER_STATUS.BATTLE});
+        if (userState.length === 0 || userState.length !== 2) {
+            log.info('无法获取对战用户信息, 错误用户状态: ${userState}');
+            return DataResp.fail('对战数据丢失');
         } else {
-            const lastBattleData = await BattleHistoryDao.builder().getUserLastBattleHistory(battleId, userId);
-            const tryMoveGameMap = boardUtils.tryMoveChess(FenUtils.fromFen(lastBattleData.gameFen), from, to);
-
-            const isKillBoss = battleUtils.killBossCheck(FenUtils.fromFen(tryMoveGameMap), from.isBlackColor);
-            const chessId = from.id;
-
-            // log.info(`[${userId}]是否将军: ${isKillBoss}`);
-            if (isKillBoss) {
-
-                const oneChessCount = longFighting.getOneLongFightData(userId, chessId);
-                const multipleChessCount = longFighting.getMultipleLongFightData(userId);
-                if (oneChessCount >= BATTLE.ONE_LONG_FIGHTING_COUNT) {
-                    log.info(`(${userId})已多个子拼杀将被检测到${BATTLE.ONE_LONG_FIGHTING_COUNT}次`);
-                    return DataResp.fail('禁止长将(单子强攻)');
-                }
-
-                if (multipleChessCount >= BATTLE.MULTIPLE_LONG_FIGHTING_COUNT) {
-                    log.info(`(${userId})已多个子拼杀将被检测到${BATTLE.MULTIPLE_LONG_FIGHTING_COUNT}次`);
-                    return DataResp.fail('禁止长将(多子围攻)');
-                }
-
-                // 将军则累计持续将军次数
-                await longFighting.updateLongFighting(userId, chessId, 1);
-                log.info(`[${userId}]累计后的次数,单个子: ${oneChessCount},多个子: ${multipleChessCount}`);
-            } else {
-                // 末将军，清除记录的持续将军的次数
-                await longFighting.clearLongFightCount(userId);
+            // 保存对战要移动棋子的数据
+            const enemy = userState.find((user: any) => user.userId !== userId);
+            const user = userState.find((user: any) => user.userId === userId);
+            if (lastBattleData.isRedMove !== user.first) {
+                return DataResp.fail('当前落子方不为我方');
             }
-
-            // 查询当前用户的对战状态
-            const userState: any = await UserStateDao.builder().select({roomId, userStatus: USER_STATUS.BATTLE});
-            if (userState.length === 0 || userState.length !== 2) {
-                log.info('无法获取对战用户信息, 错误用户状态: ${userState}');
-                return DataResp.fail('对战数据丢失');
+            // 检查用户的棋子是否可以移动
+            if (!(await battleUtils.checkUserMove(userId, from, to))) {
+                log.warn(`为用户[${userId}]检测棋子移动状态时, 校验不通过`);
+                return DataResp.fail('落子状态异常');
             } else {
-                // 保存对战要移动棋子的数据
-                const enemy = userState.find((user: any) => user.userId !== userId);
-                const user = userState.find((user: any) => user.userId === userId);
+
+                const tryMoveGameMap = boardUtils.tryMoveChess(FenUtils.fromFen(lastBattleData.gameFen), from, to);
+
+                const isKillBoss = battleUtils.killBossCheck(FenUtils.fromFen(tryMoveGameMap), from.isBlackColor);
+                const chessId = from.id;
+
+                // log.info(`[${userId}]是否将军: ${isKillBoss}`);
+                if (isKillBoss) {
+
+                    const oneChessCount = longFighting.getOneLongFightData(userId, chessId);
+                    const multipleChessCount = longFighting.getMultipleLongFightData(userId);
+                    if (oneChessCount >= BATTLE.ONE_LONG_FIGHTING_COUNT) {
+                        log.info(`(${userId})已多个子拼杀将被检测到${BATTLE.ONE_LONG_FIGHTING_COUNT}次`);
+                        return DataResp.fail('禁止长将(单子强攻)');
+                    }
+
+                    if (multipleChessCount >= BATTLE.MULTIPLE_LONG_FIGHTING_COUNT) {
+                        log.info(`(${userId})已多个子拼杀将被检测到${BATTLE.MULTIPLE_LONG_FIGHTING_COUNT}次`);
+                        return DataResp.fail('禁止长将(多子围攻)');
+                    }
+
+                    // 将军则累计持续将军次数
+                    await longFighting.updateLongFighting(userId, chessId, 1);
+                    log.info(`[${userId}]累计后的次数,单个子: ${oneChessCount},多个子: ${multipleChessCount}`);
+                } else {
+                    // 末将军，清除记录的持续将军的次数
+                    await longFighting.clearLongFightCount(userId);
+                }
+
 
                 await battleUtils.saveMoveChessData(user, enemy, from, to, fromChessBox, toChessBox, stepExplain);
 

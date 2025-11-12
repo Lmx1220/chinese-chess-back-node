@@ -36,9 +36,9 @@ export const enum APP {
     FILE_LOCAL_PATH = '/data/projects/uploadfile/',
     // FILE_LOCAL_PATH = '/Users/lmx/data/projects/uploadfile/socket-chess-file/uploadfile/',
     // 文件上传时的域名
-    FILE_SHOW_DOMAIN = 'http://47.108.93.44:90/images',
+    FILE_SHOW_DOMAIN = 'https://chess.kpui.top/images',
     // 分享时的域名
-    SHARE_DOMAIN = 'http://47.108.93.44:90',
+    SHARE_DOMAIN = 'https://chess.kpui.top',
     // 长时间未操作的天数
     LONG_TIME_NOT_OPERATE_DAYS = 30,
 }

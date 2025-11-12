@@ -89,6 +89,7 @@ class BattleUserDao extends BasicDao<BattleUserVo, BattleUserDo> {
             // 删除缓存(因为循环依赖的问题，此处不调用battleUtils.clearBattleCache方法)
             // await redisUtils.delete(redisKey);
             // await redisUtils.delete(redisUserKey);
+            await redisUtils.setStr(redisUserKey, '', BATTLE.DISCONNECT_TIME_SECONDS * 1000);
         }
         return true;
     }

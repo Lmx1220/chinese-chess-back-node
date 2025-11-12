@@ -1,6 +1,9 @@
 # 使用官方 Node.js 镜像
 FROM node:20-alpine
 
+# 设置上海时区
+ENV TZ=Asia/Shanghai
+
 # 设置工作目录
 WORKDIR /chess
 
